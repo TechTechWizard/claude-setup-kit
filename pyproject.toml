@@ -4,6 +4,13 @@ version = "0.1.0"
 description = "Checks a Claude Code setup or plugin repository against a stated contract: structure, documentation, and nothing leaking that should not."
 requires-python = ">=3.11"
 dependencies = ["pyyaml>=6.0"]
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+keywords = ["claude-code", "skills", "plugins", "linter"]
+
+[project.urls]
+Homepage = "https://github.com/TechTechWizard/claude-setup-kit"
 
 [project.scripts]
 claude-setup = "claude_setup_kit.cli:main"

@@ -14,7 +14,7 @@ not applicable rather than passing.
 ## Install
 
 ```sh
-uv tool install git+ssh://git@github.com/TechTechWizard/claude-setup-kit
+uv tool install git+https://github.com/TechTechWizard/claude-setup-kit
 claude-setup check .
 ```
 
@@ -82,6 +82,10 @@ has only ever seen healthy input is a function nobody has run.
 ```sh
 uv sync --group dev && uv run pytest
 ```
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
 
 ## Why it exists
 
