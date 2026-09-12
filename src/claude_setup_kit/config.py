@@ -11,6 +11,11 @@ holds the word list for the sanitisation check — client names, colleagues' nam
 the home directory of whoever wrote the repository. That list is exactly the kind
 of thing the check exists to keep out of a commit, so committing the list itself
 would defeat it.
+
+The same list serves every repository, so it is looked for in two places: beside
+the repository first, then at ~/.config/claude-setup/private.toml. One list kept
+in one place is one list that gets updated; a copy per repository is three lists
+of which two are out of date.
 """
 
 from __future__ import annotations
@@ -21,12 +26,15 @@ from pathlib import Path
 
 PUBLIC_NAME = ".claude-setup.toml"
 PRIVATE_NAME = ".claude-setup-private.toml"
+GLOBAL_PRIVATE = Path.home() / ".config" / "claude-setup" / "private.toml"
 
 
 @dataclass
 class Config:
     vendored_skills: set[str] = field(default_factory=set)
     doc_only_tools: set[str] = field(default_factory=set)
+    tool_dependencies: dict[str, str] = field(default_factory=dict)
+    python: str = "python3"
     linked_paths: tuple[str, ...] = ()
     link_target: str | None = None
     forbidden_words: list[str] = field(default_factory=list)
@@ -41,12 +49,14 @@ class Config:
         public = _read(root / PUBLIC_NAME)
         cfg.vendored_skills = set(public.get("vendored_skills", []))
         cfg.doc_only_tools = set(public.get("doc_only_tools", []))
+        cfg.tool_dependencies = dict(public.get("tool_dependencies", {}))
+        cfg.python = public.get("python", "python3")
         cfg.linked_paths = tuple(public.get("linked_paths", []))
         cfg.link_target = public.get("link_target")
         cfg.allow_home_paths = bool(public.get("allow_home_paths", False))
         cfg.skip = set(public.get("skip", []))
 
-        private = _read(root / PRIVATE_NAME)
+        private = _read(root / PRIVATE_NAME) or _read(GLOBAL_PRIVATE)
         cfg.private_found = bool(private)
         cfg.forbidden_words = list(private.get("forbidden_words", []))
         cfg.forbidden_patterns = list(private.get("forbidden_patterns", []))

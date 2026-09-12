@@ -203,6 +203,7 @@ def check_tools(root: Path, cfg) -> list[Check]:
         return checks
     for check in checks[:3]:
         check.examined = len(dirs)
+    skipped: list[str] = []
 
     for tool in dirs:
         rel = _rel(tool, root)
@@ -225,21 +226,35 @@ def check_tools(root: Path, cfg) -> list[Check]:
             checks[2].findings.append(Finding("INV-13", _rel(cli, root), f"syntax error: {exc}"))
             continue
         result = subprocess.run(
-            ["python3", str(cli), "--help"],
+            [cfg.python, str(cli), "--help"],
             capture_output=True,
             text=True,
             timeout=30,
             env={**os.environ, "PYTHONWARNINGS": "ignore"},
         )
+        dependency = cfg.tool_dependencies.get(tool.name)
         if result.returncode != 0:
+            missing = dependency and f"No module named '{dependency}'" in result.stderr
+            if missing:
+                # The tool's logic is what the invariant is about, not whether this
+                # particular machine has the third-party package installed.
+                skipped.append(f"{tool.name} ({dependency} is not installed)")
+                continue
             first = (result.stderr.strip().splitlines() or ["(no output)"])[-1]
             checks[1].findings.append(
                 Finding("INV-12", _rel(cli, root), f"--help exited {result.returncode}: {first}")
             )
-        elif "usage" not in result.stdout.lower():
+        elif not _lists_commands(result.stdout):
             checks[1].findings.append(
-                Finding("INV-12", _rel(cli, root), "--help printed no usage line")
+                Finding(
+                    "INV-12",
+                    _rel(cli, root),
+                    "--help printed neither a usage line nor a Commands section",
+                )
             )
+
+    if skipped:
+        checks[1].title += f" — {len(skipped)} skipped: {', '.join(skipped)}"
 
     claude_md = root / "CLAUDE.md"
     if not claude_md.is_file():
@@ -262,6 +277,17 @@ def check_tools(root: Path, cfg) -> list[Check]:
             Finding("INV-14", "CLAUDE.md", f"index row {stale!r} names no directory under tools/")
         )
     return checks
+
+
+def _lists_commands(text: str) -> bool:
+    """Whether --help actually enumerates commands.
+
+    argparse prints a usage line; a hand-written help prints a Commands section.
+    Both are a command list, and demanding one shape would fail tools that read
+    perfectly well to a human.
+    """
+    lowered = text.lower()
+    return "usage" in lowered or re.search(r"^\s*commands:", lowered, re.MULTILINE) is not None
 
 
 def _table_keys(section: str) -> set[str]:

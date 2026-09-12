@@ -1,0 +1,21 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - run: uv run pytest -v
+      # The kit checking itself: a repository of Python has no skills, agents or
+      # tools, so most invariants come back not applicable — what this proves is
+      # that the command runs, and that nothing has leaked into this one.
+      - run: uv run claude-setup check . --no-colour
