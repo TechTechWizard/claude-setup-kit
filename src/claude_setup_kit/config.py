@@ -40,6 +40,7 @@ class Config:
     forbidden_words: list[str] = field(default_factory=list)
     forbidden_patterns: list[str] = field(default_factory=list)
     allow_home_paths: bool = False
+    exclude_paths: list[str] = field(default_factory=list)
     skip: set[str] = field(default_factory=set)
     private_found: bool = False
 
@@ -54,6 +55,7 @@ class Config:
         cfg.linked_paths = tuple(public.get("linked_paths", []))
         cfg.link_target = public.get("link_target")
         cfg.allow_home_paths = bool(public.get("allow_home_paths", False))
+        cfg.exclude_paths = list(public.get("exclude_paths", []))
         cfg.skip = set(public.get("skip", []))
 
         private = _read(root / PRIVATE_NAME) or _read(GLOBAL_PRIVATE)

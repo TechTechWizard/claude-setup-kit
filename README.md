@@ -33,7 +33,7 @@ It exits 0 when everything applicable passes, 1 when something failed, 2 when th
 path is not a directory.
 
 ```
-claude-setup check /Users/you/Work/claude-pack
+claude-setup check ~/Work/claude-pack
 
   ok    INV-1   every skill directory has a readable SKILL.md (1)
   ok    INV-4   the name equals the directory name (1)
@@ -65,7 +65,7 @@ The word list for the sanitisation check lives apart from all of this, in
 `~/.config/claude-setup/private.toml`, and is never committed anywhere:
 
 ```toml
-forbidden_words = ["AcmeCorp", "Соколов"]
+forbidden_words = ["AcmeCorp", "A Colleague"]
 forbidden_patterns = ["\\b90[0-9]{10}\\b"]
 ```
 

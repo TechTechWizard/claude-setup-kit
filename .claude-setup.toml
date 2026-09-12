@@ -1,0 +1,8 @@
+# What is particular about this repository, for `claude-setup check`.
+
+# The tests of the sanitisation checks must contain the very strings those checks
+# hunt for — a fake private key, a home directory path, a task identifier, a list
+# id. There is no way to test a detector without giving it something to detect, so
+# the test directory is exempt. Everything else here is scanned, including this
+# file, the README and the specification.
+exclude_paths = ["tests/*", "tests/**/*"]

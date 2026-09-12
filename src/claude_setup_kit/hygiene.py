@@ -11,6 +11,7 @@ fails on the evening they are tired.
 from __future__ import annotations
 
 import re
+from fnmatch import fnmatch
 from pathlib import Path
 
 from .common import Check, Finding, is_text, rel, tracked_files
@@ -38,6 +39,12 @@ PLACEHOLDER = re.compile(
     r"(your[_-]?token|<[^>]{1,40}>|pk_\.\.\.|sk-\.\.\.|xxx+|example|placeholder)",
     re.IGNORECASE,
 )
+
+# The escape hatch. A checker that cannot be told "this line is deliberate" forces
+# people to either delete a legitimate example or stop reading its output — and the
+# second is what actually happens. It has to be on the line itself, so that the
+# exemption is visible to whoever reads the line next.
+ALLOW = re.compile(r"claude-setup:\s*allow")
 
 
 def check_links(root: Path, cfg) -> list[Check]:
@@ -93,6 +100,8 @@ def check_secrets(root: Path, cfg) -> list[Check]:
 
     for path in files:
         relative = rel(path, root)
+        if any(fnmatch(relative, pattern) for pattern in cfg.exclude_paths):
+            continue
 
         parts = Path(relative).parts
         if ("config" in parts and "tools" in parts) or SESSION_FILE.match(relative):
@@ -102,36 +111,40 @@ def check_secrets(root: Path, cfg) -> list[Check]:
 
         if not is_text(path):
             continue
-        text = path.read_text(encoding="utf-8", errors="replace")
 
-        for label, pattern in CREDENTIAL_PATTERNS:
-            for match in pattern.finditer(text):
-                if PLACEHOLDER.search(match.group(0)):
-                    continue
-                checks[0].findings.append(
-                    Finding("INV-21", relative, f"{label}: {match.group(0)[:14]}…")
-                )
+        for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if ALLOW.search(line):
+                continue
+            where = f"{relative}:{number}"
 
-        if checks[2].applicable:
-            seen = {m.group(0) for m in HOME_PATH.finditer(text)}
-            for found in sorted(seen):
-                checks[2].findings.append(
-                    Finding("INV-23", relative, f"home directory path: {found}")
-                )
-
-        seen_ids = {m.group(0) for m in TASK_ID.finditer(text)}
-        for found in sorted(seen_ids):
-            checks[3].findings.append(Finding("INV-24", relative, f"task identifier: {found}"))
-
-        if checks[4].applicable:
-            for word, pattern in words:
-                if pattern.search(text):
-                    checks[4].findings.append(Finding("INV-25", relative, f"word: {word}"))
-            for source, pattern in extra:
-                match = pattern.search(text)
-                if match:
-                    checks[4].findings.append(
-                        Finding("INV-25", relative, f"pattern {source}: {match.group(0)[:30]}")
+            for label, pattern in CREDENTIAL_PATTERNS:
+                for match in pattern.finditer(line):
+                    if PLACEHOLDER.search(match.group(0)):
+                        continue
+                    checks[0].findings.append(
+                        Finding("INV-21", where, f"{label}: {match.group(0)[:14]}…")
                     )
+
+            if checks[2].applicable:
+                for match in HOME_PATH.finditer(line):
+                    checks[2].findings.append(
+                        Finding("INV-23", where, f"home directory path: {match.group(0)}")
+                    )
+
+            for match in TASK_ID.finditer(line):
+                checks[3].findings.append(
+                    Finding("INV-24", where, f"task identifier: {match.group(0)}")
+                )
+
+            if checks[4].applicable:
+                for word, pattern in words:
+                    if pattern.search(line):
+                        checks[4].findings.append(Finding("INV-25", where, f"word: {word}"))
+                for source, pattern in extra:
+                    match = pattern.search(line)
+                    if match:
+                        checks[4].findings.append(
+                            Finding("INV-25", where, f"pattern {source}: {match.group(0)[:30]}")
+                        )
 
     return checks
