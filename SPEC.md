@@ -123,12 +123,27 @@ package that had been reviewed by hand, and a run's transcripts reached a commit
 because an ignore rule was anchored to the wrong directory. A rule a person has to
 remember is a rule that fails on the evening they are tired.
 
+## Two ways out
+
+A checker without an escape hatch is a checker people stop reading. There are two,
+and both are meant to be visible to whoever reads the code next rather than buried
+in a settings file.
+
+`exclude_paths` in `.claude-setup.toml` takes glob patterns and exempts whole
+paths from the sanitisation checks. This repository uses it for its own tests: the
+tests of a detector must contain the thing it detects, and there is no way around
+that.
+
+A `claude-setup: allow` comment anywhere on a line exempts that line, and nothing
+else. It is for the documented example that has to look real — a path in a README,
+a token shape in a guide.
+
 ## Configuration
 
 `.claude-setup.toml`, committed, says what is particular about one repository:
 `vendored_skills`, `doc_only_tools`, `tool_dependencies`, `python`,
-`linked_paths`, `link_target`, `allow_home_paths`, and `skip` for an invariant
-that does not apply here and never will.
+`linked_paths`, `link_target`, `allow_home_paths`, `exclude_paths`, and `skip`
+for an invariant that does not apply here and never will.
 
 `.claude-setup-private.toml`, never committed, carries `forbidden_words` and
 `forbidden_patterns`.

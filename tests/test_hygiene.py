@@ -146,3 +146,43 @@ def test_correct_link_passes(repo, tmp_path):
     (home / ".claude" / "skills").symlink_to(repo.root / "skills")
     cfg = repo.config(linked_paths=("skills",), link_target=str(home / ".claude"))
     assert check_links(repo.root, cfg)[0].passed
+
+
+# --- the escape hatches ----------------------------------------------------
+
+
+def test_excluded_path_is_not_scanned(repo):
+    repo.write("tests/fixtures.py", "token = 'gh" + "p_" + "d" * 36 + "'\n")
+    repo.commit()
+    cfg = repo.config(exclude_paths=["tests/*"])
+    assert find(check_secrets(repo.root, cfg), "INV-21").passed
+
+
+def test_exclusion_is_not_a_blanket(repo):
+    repo.write("tests/fixtures.py", "token = 'gh" + "p_" + "e" * 36 + "'\n")
+    repo.write("src/leaked.py", "token = 'gh" + "p_" + "f" * 36 + "'\n")
+    repo.commit()
+    cfg = repo.config(exclude_paths=["tests/*"])
+    check = find(check_secrets(repo.root, cfg), "INV-21")
+    assert not check.passed
+    assert "src/leaked.py" in messages(check) and "tests/" not in messages(check)
+
+
+def test_allow_marker_exempts_its_own_line(repo):
+    repo.write(
+        "doc.md",
+        "Real: /Users/somebody/Work/x\n"
+        "Deliberate: /Users/somebody/Work/y  <!-- claude-setup: allow -->\n",
+    )
+    repo.commit()
+    check = find(check_secrets(repo.root, repo.config()), "INV-23")
+    assert not check.passed, "the unmarked line must still be caught"
+    assert len(check.findings) == 1, messages(check)
+    assert check.findings[0].path.endswith(":1")
+
+
+def test_findings_name_the_line(repo):
+    repo.write("doc.md", "first\nsecond\nhttps://app.clickup.com/t/86zzz9999\n")
+    repo.commit()
+    check = find(check_secrets(repo.root, repo.config()), "INV-24")
+    assert check.findings[0].path.endswith("doc.md:3"), check.findings[0].path
