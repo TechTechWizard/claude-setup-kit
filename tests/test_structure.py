@@ -206,3 +206,17 @@ def test_routing_table_names_a_missing_skill(repo):
     repo.write("CLAUDE.md", "## Skill-first\n\n| Skill | Triggers |\n|---|---|\n| here | a |\n| gone | b |\n")
     check = find(check_hooks_and_settings(repo.root, repo.config()), "INV-19")
     assert not check.passed and "gone" in messages(check)
+
+
+def test_flat_skill_at_root_is_checked(repo):
+    """An Agent Skills repository keeps skills flat at the root, one directory each."""
+    (repo / "flat-one").mkdir()
+    (repo / "flat-one" / "SKILL.md").write_text(
+        "---\nname: flat-one\ndescription: A flat skill.\n---\n# Flat\n"
+    )
+    (repo / "not-a-skill").mkdir()
+    (repo / "not-a-skill" / "README.md").write_text("nothing here")
+    from claude_setup_kit.structure import skill_dirs
+    names = [p.name for p in skill_dirs(repo)]
+    assert "flat-one" in names
+    assert "not-a-skill" not in names

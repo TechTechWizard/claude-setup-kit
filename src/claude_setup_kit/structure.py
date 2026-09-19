@@ -42,6 +42,13 @@ def skill_dirs(root: Path) -> list[Path]:
             inner = plugin / "skills"
             if inner.is_dir():
                 dirs.extend(sorted(p for p in inner.iterdir() if p.is_dir()))
+    # An Agent Skills repository installed with `npx skills` keeps them flat at the
+    # root, one directory per skill. Only a directory that already carries a SKILL.md
+    # counts here: at the root there is no way to tell an unfinished skill from a
+    # directory that was never meant to be one.
+    dirs.extend(
+        sorted(p for p in root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file() and p not in dirs)
+    )
     return dirs
 
 

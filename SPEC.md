@@ -12,8 +12,10 @@ Last reviewed: 2026-09-12.
 
 ## Skills
 
-A skill is a directory whose entry point is `SKILL.md`, either under `skills/` or
-under `plugins/<name>/skills/`. The description is the whole triggering mechanism
+A skill is a directory whose entry point is `SKILL.md`: under `skills/`, under
+`plugins/<name>/skills/`, or flat at the repository root the way an Agent Skills
+repository installed with `npx skills` lays them out — there, only a directory that
+already has a `SKILL.md` is taken for a skill. The description is the whole triggering mechanism
 — it is the only part always in context — so it has to say both what the skill
 does and the words that summon it.
 
