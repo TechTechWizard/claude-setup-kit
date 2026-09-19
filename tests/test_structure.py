@@ -210,13 +210,9 @@ def test_routing_table_names_a_missing_skill(repo):
 
 def test_flat_skill_at_root_is_checked(repo):
     """An Agent Skills repository keeps skills flat at the root, one directory each."""
-    (repo / "flat-one").mkdir()
-    (repo / "flat-one" / "SKILL.md").write_text(
-        "---\nname: flat-one\ndescription: A flat skill.\n---\n# Flat\n"
-    )
-    (repo / "not-a-skill").mkdir()
-    (repo / "not-a-skill" / "README.md").write_text("nothing here")
+    repo.write("flat-one/SKILL.md", "---\nname: flat-one\ndescription: A flat skill.\n---\n# Flat\n")
+    repo.write("not-a-skill/README.md", "nothing here")
     from claude_setup_kit.structure import skill_dirs
-    names = [p.name for p in skill_dirs(repo)]
+    names = [p.name for p in skill_dirs(repo.root)]
     assert "flat-one" in names
     assert "not-a-skill" not in names
