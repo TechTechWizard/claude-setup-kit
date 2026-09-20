@@ -16,10 +16,15 @@ from pathlib import Path
 
 from .common import Check, Finding, FrontmatterError, read_frontmatter, strip_code
 
+# The six fields of the Agent Skills specification — name, description, license,
+# compatibility, metadata, allowed-tools — plus the two Claude Code extensions we use.
+# `compatibility` was missing until 20.09.2026, so a skill that honestly declared what it
+# needs failed the check that exists to catch typos.
 KNOWN_SKILL_KEYS = {
     "name",
     "description",
     "allowed-tools",
+    "compatibility",
     "disable-model-invocation",
     "license",
     "version",

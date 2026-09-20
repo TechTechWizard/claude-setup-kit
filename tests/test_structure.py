@@ -216,3 +216,10 @@ def test_flat_skill_at_root_is_checked(repo):
     names = [p.name for p in skill_dirs(repo.root)]
     assert "flat-one" in names
     assert "not-a-skill" not in names
+
+
+def test_compatibility_is_a_known_key(skill, repo):
+    """compatibility is one of the six Agent Skills fields, not a typo."""
+    skill("ok", "---\nname: ok\ndescription: x\ncompatibility: Requires git and glab.\n---\n")
+    check = find(check_skills(repo.root, repo.config()), "INV-5")
+    assert check.passed, messages(check)
