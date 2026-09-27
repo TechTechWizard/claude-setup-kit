@@ -1,0 +1,9 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+dist/
+
+# The word list is the point of the secrets check and must never be committed.
+.claude-setup-private.toml
