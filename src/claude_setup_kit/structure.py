@@ -59,7 +59,10 @@ def skill_dirs(root: Path) -> list[Path]:
 
 def agent_files(root: Path) -> list[Path]:
     found: list[Path] = []
-    for base in (root / "agents", *sorted((root / "plugins").glob("*/agents"))):
+    # A skill installed with `npx skills` can carry roles of its own, in <skill>/agents/,
+    # because that is the only directory the installer copies.
+    inside_skills = [p / "agents" for p in skill_dirs(root)]
+    for base in (root / "agents", *sorted((root / "plugins").glob("*/agents")), *inside_skills):
         if base.is_dir():
             found.extend(sorted(base.glob("*.md")))
     return found

@@ -113,6 +113,15 @@ def test_agent_tools_may_be_absent_but_not_empty(repo):
     assert not find(check_agents(repo.root, repo.config()), "INV-10").passed
 
 
+def test_agents_inside_a_skill_are_checked(repo):
+    repo.write("lead/SKILL.md", "---\nname: lead\ndescription: x\n---\nbody\n")
+    repo.write("lead/agents/back.md", "---\nname: front\ndescription: x\n---\n")
+    checks = check_agents(repo.root, repo.config())
+    assert find(checks, "INV-9").applicable
+    assert find(checks, "INV-9").examined == 1
+    assert not find(checks, "INV-9").passed
+
+
 # --- tools -----------------------------------------------------------------
 
 HELP_SCRIPT = """#!/usr/bin/env python3
